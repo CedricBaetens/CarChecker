@@ -67,6 +67,7 @@ const prioOptions = [
   'Driving Assistant Pack Plus',
   'Driving Assistant Pack Professional',
   // 'Parking Assistant Pack',
+  'Adaptieve ophanging Professional',
   'Parking Assistant Pack Plus',
   'Parking Assistant Pack Professional',
   'Verwarmd stuurwiel',
@@ -89,19 +90,19 @@ const prioOptions = [
 
 // State for selected options
 const selectedOptions = ref<string[]>([
-  'Driving Assistant Pack Plus',
-  'Driving Assistant Pack Professional',
-  'Parking Assistant Pack Plus',
-  'Parking Assistant Pack Professional',
-  'Verwarmd stuurwiel',
-  'Verwarmde zetels vooraan',
-  'Verwarmde zetels vooraan en achteraan',
-  'Panoramisch doorschijnend dak',
-  'BMW Iconic Glow Exterieur Pack',
-  'Comforttoegang',
-  'Sfeerverlichting',
-  'M veiligheidsgordels',
-  'M sportstuur',
+  // 'Driving Assistant Pack Plus',
+  // 'Driving Assistant Pack Professional',
+  // 'Parking Assistant Pack Plus',
+  // 'Parking Assistant Pack Professional',
+  // 'Verwarmd stuurwiel',
+  // 'Verwarmde zetels vooraan',
+  // 'Verwarmde zetels vooraan en achteraan',
+  // 'Panoramisch doorschijnend dak',
+  // 'BMW Iconic Glow Exterieur Pack',
+  // 'Comforttoegang',
+  // 'Sfeerverlichting',
+  // 'M veiligheidsgordels',
+  // 'M sportstuur',
 ])
 
 // Processed cars list
