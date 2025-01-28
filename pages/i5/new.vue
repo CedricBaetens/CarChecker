@@ -3,6 +3,16 @@
     <!-- Filter Section (Left Sidebar) -->
     <div class="w-1/4 pr-5 h-full overflow-y-auto border-r">
       <div class="mb-5">
+        <!-- Price Filter -->
+        <div class="mb-5">
+          <label class="block mb-1">Max Price:</label>
+          <input
+            v-model.number="maxPrice"
+            type="number"
+            placeholder="Enter max price"
+            class="w-full p-2 border rounded">
+        </div>
+
         <!-- Sort Options -->
         <div class="mb-5">
           <label class="block mb-1">Sort By:</label>
@@ -146,6 +156,7 @@ const selectedOptions = ref<string[]>([
   'Panoramisch doorschijnend dak',
 ])
 const sortOption = ref<'listPrice' | 'prioOptions'>('listPrice')
+const maxPrice = ref<number | null>(null)
 
 const formatted = computed(() => {
   const result = data.value.data.map((x: any) => {
@@ -190,7 +201,10 @@ const formatted = computed(() => {
 })
 
 const priorityOptions = computed(() => {
-  return uniqueOptions.value.filter(option => prioOptions.includes(option.name))
+  return _.sortBy(
+    uniqueOptions.value.filter(option => prioOptions.includes(option.name)),
+    'name',
+  )
 })
 
 const nonPriorityOptions = computed(() => {
@@ -203,9 +217,11 @@ const uniqueOptions = computed(() => {
 })
 
 const filteredCars = computed(() => {
-  return formatted.value?.filter(car =>
-    selectedOptions.value.every(x => car.options.some(option => option.name === x)),
-  )
+  return formatted.value?.filter((car) => {
+    const matchesOptions = selectedOptions.value.every(x => car.options.some(option => option.name === x))
+    const matchesPrice = !maxPrice.value || car.listPrice <= maxPrice.value
+    return matchesOptions && matchesPrice
+  })
 })
 
 const formatCurrency = (value: number) => {
