@@ -6,6 +6,38 @@
         Options
       </h2>
 
+      <!-- Search by Name -->
+      <div class="mb-4">
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="Search by name"
+          class="w-full p-2 border rounded">
+      </div>
+
+      <!-- Price Filter -->
+      <div class="mb-4">
+        <label class="block mb-1">Max Price:</label>
+        <input
+          v-model.number="maxPrice"
+          type="number"
+          placeholder="Enter max price"
+          class="w-full p-2 border rounded">
+      </div>
+
+      <!-- Sort Options -->
+      <div class="mb-4">
+        <label class="block mb-1">Sort By:</label>
+        <select v-model="sortOption" class="w-full p-2 border rounded">
+          <option value="price">
+            Price
+          </option>
+          <option value="prioOptions">
+            Most Priority Options
+          </option>
+        </select>
+      </div>
+
       <!-- Prioritized Options -->
       <div v-for="option in prioSortedOptions" :key="`prio-${option}`" class="mb-2">
         <label class="flex items-center">
@@ -39,6 +71,7 @@
       <h2 class="text-xl font-semibold mb-4">
         Filtered Cars {{ filteredCars.length ? `(${filteredCars.length})` : '' }}
       </h2>
+
       <div v-if="filteredCars.length">
         <!-- Grid Display for Cars -->
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -53,24 +86,29 @@
             <p><strong>Power:</strong> {{ car.power || 'N/A' }}</p>
             <p><strong>Dealer:</strong> {{ car.dealer || 'N/A' }}</p>
             <div v-if="car.options?.length">
-              <p><strong>Priority Options:</strong></p>
+              <p><strong>Priority Options:</strong> ({{ car.options.filter(o => prioOptions.includes(o)).length }}/{{ prioOptions.length }})</p>
+
+              <p class="font-semibold mt-2">
+                Included Options:
+              </p>
               <ul class="list-disc pl-5">
                 <li
-                  v-for="option in car.options.filter(o => prioOptions.includes(o))"
-                  :key="option">
-                  {{ option }}
+                  v-for="option in prioOptions.filter(o => car.options.includes(o))"
+                  :key="option"
+                  class="flex items-center">
+                  <span class="text-green-500 mr-2">✔️</span> {{ option }}
                 </li>
               </ul>
-              <p v-if="car.options.length > prioOptions.length">
-                <strong>Other Options:</strong>
+
+              <p class="font-semibold mt-2">
+                Missing Options:
               </p>
-              <ul
-                v-if="car.options.length > prioOptions.length"
-                class="list-disc pl-5">
+              <ul class="list-disc pl-5">
                 <li
-                  v-for="option in car.options.filter(o => !prioOptions.includes(o))"
-                  :key="option">
-                  {{ option }}
+                  v-for="option in prioOptions.filter(o => !car.options.includes(o))"
+                  :key="option"
+                  class="flex items-center">
+                  <span class="text-red-500 mr-2">❌</span> {{ option }}
                 </li>
               </ul>
             </div>
@@ -92,16 +130,17 @@ import _ from 'lodash'
 const { data } = useFetch('/api/i5/used')
 
 // Define the car type
-type Car = {
+interface Car {
   title: string | null
   link: string | null
   price: string | null
   km: string | null
+  power: string | null
   dealer: string | null
   options: string[] | null
 }
 
-// Priority options to display at the top and in car details
+// Priority options
 const prioOptions = [
   'Actieve ventilatie vooraan',
   'Adaptieve ophanging Professional',
@@ -118,7 +157,7 @@ const prioOptions = [
   'Flexible Fast Charger (Mode 2)',
   'Harman Kardon Surround Sound System',
   'Hemelbekleding in Anthrazit',
-  'Interieur elementen met kristalafwerking \'CraftedClarity\'',
+  'Interieur elementen met kristalafwerking \"CraftedClarity\"',
   'M sportstuur',
   'M veiligheidsgordels',
   'Panoramisch schuifdak',
@@ -127,90 +166,68 @@ const prioOptions = [
   'Snellaadkabel tot 22kW (Mode 3)',
   'Snelladen AC (wisselstroom) meerfasig',
   'Verwarmd stuur',
-  'Verwarmde zetels vooraan',
   'Verwarmde zetels vooraan en achteraan',
   'Zonnewerend glas achteraan',
 ]
 
-// Store selected options from the sidebar (default enabled)
+// Default selected options
 const selectedOptions = ref<string[]>([
-  'Actieve ventilatie vooraan',
   'Adaptieve ophanging Professional',
-  'Automatische bediening van de achterklep',
   'BMW Iconic Glow Exterieur Pack',
-  'BMW IconicSounds Electric',
-  'BMW Live Cockpit Professional (GPS)',
-  'BMW Live Cockpit Professional (GPS)',
-  'Bowers & Wilkins Surround Sound System',
-  'Comforttoegang',
-  'Comfortzetels vooraan met elektrische regeling en geheugenfunctie',
   'Driving Assistant Pack Professional',
-  'Elektronisch gestuurde airconditioning, 4-zoneregeling',
-  'Flexible Fast Charger (Mode 2)',
-  'Hemelbekleding in Anthrazit',
-  'Interieur elementen met kristalafwerking \'CraftedClarity\'',
-  // 'Lendensteun voor zetels vooraan',
+  'Parking Assistant Pack Professional',
+  'Panoramisch schuifdak',
   'M sportstuur',
   'M veiligheidsgordels',
-  'Panoramisch schuifdak',
-  'Parking Assistant Pack Professional',
-  'Sfeerverlichting',
-  'Snellaadkabel tot 22kW (Mode 3)',
-  'Snelladen AC (wisselstroom) meerfasig',
   'Verwarmd stuur',
-  'Verwarmde zetels vooraan en achteraan',
-  'Zonnewerend glas achteraan',
+  'Sfeerverlichting',
 ])
 
-// Get all unique options and sort them alphabetically
-const prioSortedOptions = computed(() => {
-  const optionsSet = new Set<string>()
-  data.value?.forEach((car: Car) => {
-    if (car.options) {
-      car.options.forEach(option => optionsSet.add(option))
-    }
-  })
+// State variables
+const searchQuery = ref('')
+const maxPrice = ref<number | null>(null)
+const sortOption = ref<'price' | 'prioOptions'>('price')
 
-  const allOptions = Array.from(optionsSet)
-  return _.orderBy(prioOptions.filter(option => allOptions.includes(option)), x => x)
+// Compute unique and sorted options
+const optionsSet = computed(() => {
+  const set = new Set<string>()
+  data.value?.forEach((car: Car) => {
+    car.options?.forEach(option => set.add(option))
+  })
+  return set
+})
+
+const prioSortedOptions = computed(() => {
+  return _.intersection(prioOptions, Array.from(optionsSet.value))
 })
 
 const remainingSortedOptions = computed(() => {
-  const optionsSet = new Set<string>()
-  data.value?.forEach((car: Car) => {
-    if (car.options) {
-      car.options.forEach(option => optionsSet.add(option))
-    }
-  })
-
-  const allOptions = Array.from(optionsSet)
-  return _.orderBy(allOptions.filter(option => !prioOptions.includes(option)).sort(), x => x)
+  return _.difference(Array.from(optionsSet.value), prioOptions)
 })
 
-const sortedOptions = computed(() => {
-  return [...prioSortedOptions.value, ...remainingSortedOptions.value]
-})
-
-// Filter cars based on selected options and sort by price
-// Filter cars based on selected options and sort by price (smallest to largest)
+// Filtered cars
 const filteredCars = computed(() => {
-  const cars = data.value?.filter((car: Car) =>
-    selectedOptions.value.every(option => car.options?.includes(option)),
-  ) || []
+  const cars = (data.value || []).filter((car: Car) => {
+    const matchesOptions = selectedOptions.value.every(option => car.options?.includes(option))
+    const matchesSearch = car.title?.toLowerCase().includes(searchQuery.value.toLowerCase()) || false
+    const matchesPrice = !maxPrice.value || Number.parseFloat(car.price?.replace(/[^\d.]/g, '') || '0') <= maxPrice.value
 
-  // Sort the cars by price (assuming price is a string representing a number)
-  return cars.sort((a, b) => {
-    // Clean and parse the price values
-    const cleanPrice = (price: string | null) => {
-      if (!price) return 0
-      return Number.parseFloat(price.replace(/[^\d.-]/g, '')) // Remove non-numeric characters
-    }
-
-    const priceA = cleanPrice(a.price)
-    const priceB = cleanPrice(b.price)
-
-    // Sorting from smallest to largest (ascending order)
-    return priceA - priceB
+    return matchesOptions && matchesSearch && matchesPrice
   })
+
+  if (sortOption.value === 'price') {
+    return cars.sort((a, b) => {
+      const priceA = Number.parseFloat(a.price?.replace(/[^\d.]/g, '') || '0')
+      const priceB = Number.parseFloat(b.price?.replace(/[^\d.]/g, '') || '0')
+      return priceA - priceB
+    })
+  }
+  else {
+    return cars.sort((a, b) => {
+      const prioCountA = a.options?.filter(o => prioOptions.includes(o)).length || 0
+      const prioCountB = b.options?.filter(o => prioOptions.includes(o)).length || 0
+      return prioCountB - prioCountA
+    })
+  }
 })
 </script>
