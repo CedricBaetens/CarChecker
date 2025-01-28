@@ -142,6 +142,8 @@ const prioOptions = [
   'M Hemelbekleding Anthrazit',
   'Opbergvak voor Wireless Charging',
   'BMW Live Cockpit Navigation Professional met Head-Up Display',
+  'M sportophanging',
+  'Adaptieve M sportophanging Professional',
 ]
 
 const selectedOptions = ref<string[]>([
